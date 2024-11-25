@@ -15,9 +15,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+cmake_minimum_required(VERSION 3.10)
 
 project(librsync C)
-cmake_minimum_required(VERSION 3.6)
 
 INCLUDE(CMakeDependentOption)
 include(GNUInstallDirs)
@@ -92,11 +92,11 @@ check_symbol_exists ( __FUNCTION__ "" HAVE___FUNCTION__ )
 include ( CheckFunctionExists )
 check_function_exists ( fseeko HAVE_FSEEKO )
 check_function_exists ( fseeko64 HAVE_FSEEKO64 )
-check_function_exists ( _fseeki64 HAVE__FSEEKI64 )
+# check_function_exists ( _fseeki64 HAVE__FSEEKI64 )
 check_function_exists ( fstat64 HAVE_FSTAT64 )
-check_function_exists ( _fstati64 HAVE__FSTATI64 )
+# check_function_exists ( _fstati64 HAVE__FSTATI64 )
 check_function_exists ( fileno HAVE_FILENO )
-check_function_exists ( _fileno HAVE__FILENO )
+# check_function_exists ( _fileno HAVE__FILENO )
 
 include(CheckTypeSize)
 check_type_size ( "long" SIZEOF_LONG )
@@ -144,6 +144,9 @@ if(APPLE)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
   endif()
 endif()
+
+include(CMakePrintHelpers)
+cmake_print_variables(CMAKE_C_COMPILER_ID)
 
 if (CMAKE_C_COMPILER_ID MATCHES "(Clang|Gnu|GNU)")
   # TODO: Set -Werror when the build is clean.
@@ -412,7 +415,12 @@ set(rsync_LIB_SRCS
     src/whole.c
     ${blake2_SRCS})
 
-add_library(rsync ${rsync_LIB_SRCS})
+set(rsync_LIB_HDRS
+    src/librsync.h
+    src/librsync_export.h
+)
+
+add_library(rsync ${rsync_LIB_SRCS} ${rsync_LIB_HDRS})
 # TODO: Enable this when GenerateExportHeader works more widely.
 # include(GenerateExportHeader)
 # generate_export_header(rsync BASE_NAME librsync
@@ -438,13 +446,22 @@ else (BUILD_SHARED_LIBS)
 endif (BUILD_SHARED_LIBS)
 
 set_target_properties(rsync PROPERTIES
-    VERSION ${LIBRSYNC_VERSION}
-    SOVERSION ${LIBRSYNC_MAJOR_VERSION})
-install(TARGETS rsync ${INSTALL_TARGETS_DEFAULT_ARGS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  FRAMEWORK TRUE
+  FRAMEWORK_VERSION C
+  MACOSX_FRAMEWORK_IDENTIFIER com.apple.librsync
+  VERSION ${LIBRSYNC_VERSION}
+  SOVERSION ${LIBRSYNC_MAJOR_VERSION}
+  PUBLIC_HEADER "${rsync_LIB_HDRS}"
 )
+
+# set_target_properties(rsync PROPERTIES
+#     VERSION ${LIBRSYNC_VERSION}
+#     SOVERSION ${LIBRSYNC_MAJOR_VERSION})
+# install(TARGETS rsync ${INSTALL_TARGETS_DEFAULT_ARGS}
+#         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+# )
 
 
 ########### next target ###############

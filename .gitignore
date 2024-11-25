@@ -73,3 +73,7 @@ rules.ninja
 *.sln
 *.vcxproj
 *.vcxproj.filters
+
+xros
+xrsim
+rsync.xcframework
